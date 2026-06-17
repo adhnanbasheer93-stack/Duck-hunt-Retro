@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --font-press: "Press Start 2P", monospace;
+  --color-nes-sky: #63adff;
+  --color-nes-green: #44891a;
+  --color-nes-red: #ff0000;
+}
+
+@layer base {
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    font-family: "Press Start 2P", monospace;
+    color: #fff;
+    image-rendering: pixelated;
+    text-transform: uppercase;
+  }
+}
+
+/* Brutalist / Creative Tool styling helpers */
+.brutalist-border {
+  border: 4px solid #000000;
+}
+
+.brutalist-border-thick {
+  border: 8px solid #ffffff;
+}
+
+.brutalist-shadow-green {
+  box-shadow: 12px 12px 0px 0px #44891a;
+}
+
+.brutalist-shadow-red {
+  box-shadow: 12px 12px 0px 0px #ff0000;
+}
+
+.brutalist-shadow-black {
+  box-shadow: 12px 12px 0px 0px #000000;
+}
+
+.brutalist-shadow-white {
+  box-shadow: 12px 12px 0px 0px #ffffff;
+}
+
+/* Dynamic button translates */
+.brutalist-btn-press {
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.brutalist-btn-press:active {
+  transform: translate(6px, 6px);
+  box-shadow: 4px 4px 0px 0px #000000;
+}
+
+/* Retro NES styling helpers */
+.nes-border {
+  border: 4px solid #000;
+}
+
+.nes-shadow {
+  box-shadow: 6px 6px 0px #44891a;
+}
+
+.nes-shadow-red {
+  box-shadow: 6px 6px 0px #ff0000;
+}
+
+.nes-btn-press:active {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0px #44891a;
+}
+
+/* Mirror the webcam video */
+.mirror-webcam {
+  transform: scaleX(-1);
+}
+
+/* Reticle pulsing animation */
+@keyframes pulse-reticle {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.animate-pulse-reticle {
+  animation: pulse-reticle 1s infinite ease-in-out;
+}
+
+

@@ -1,0 +1,6 @@
+{
+  "name": "Duck Hunt AR",
+  "description": "An augmented reality web-based Duck Hunt game with webcam hand tracking, synthesized NES-style retro audio, and pixel-art elements.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

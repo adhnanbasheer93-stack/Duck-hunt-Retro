@@ -1,0 +1,21 @@
+{
+  "collections": {
+    "highScores": {
+      "path": "highScores",
+      "schema": {
+        "name": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        },
+        "difficulty": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        }
+      }
+    }
+  }
+}
