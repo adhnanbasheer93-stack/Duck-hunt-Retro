@@ -142,12 +142,18 @@ class CanvasDuck {
     
     // Spawn off-screen
     this.x = this.direction === 1 ? -this.size * 2 : width + this.size;
-    this.y = Math.random() * (height * 0.4) + 100; // spawn in top 40% area
-    this.baseY = this.y;
     
     this.waveOffset = Math.random() * Math.PI * 2;
     this.waveSpeed = selectedType === 'BOSS' ? 0.005 : 0.01 + Math.random() * 0.015;
     this.waveAmplitude = selectedType === 'BOSS' ? 15 + Math.random() * 15 : 25 + Math.random() * 25;
+
+    // Limit movement to avoid going under/behind the top HUD (status section)
+    const hudHeight = width < 768 ? 65 : 135;
+    const minBaseY = hudHeight + this.waveAmplitude + 10;
+    const maxBaseY = Math.max(minBaseY + 20, Math.min(height - 160 - this.waveAmplitude, hudHeight + (height - hudHeight) * 0.45));
+    this.y = minBaseY + Math.random() * (maxBaseY - minBaseY);
+    this.baseY = this.y;
+
     this.flapFrame = 0;
     this.isDead = false;
     this.deathState = 'ALIVE';
@@ -192,10 +198,16 @@ class CanvasDuck {
     // boundary turn around
     if (this.direction === 1 && this.x > width + this.size * 2) {
       this.direction = -1;
-      this.baseY = Math.random() * (height * 0.4) + 100;
+      const hudHeight = width < 768 ? 65 : 135;
+      const minBaseY = hudHeight + this.waveAmplitude + 10;
+      const maxBaseY = Math.max(minBaseY + 20, Math.min(height - 160 - this.waveAmplitude, hudHeight + (height - hudHeight) * 0.45));
+      this.baseY = minBaseY + Math.random() * (maxBaseY - minBaseY);
     } else if (this.direction === -1 && this.x < -this.size * 2) {
       this.direction = 1;
-      this.baseY = Math.random() * (height * 0.4) + 100;
+      const hudHeight = width < 768 ? 65 : 135;
+      const minBaseY = hudHeight + this.waveAmplitude + 10;
+      const maxBaseY = Math.max(minBaseY + 20, Math.min(height - 160 - this.waveAmplitude, hudHeight + (height - hudHeight) * 0.45));
+      this.baseY = minBaseY + Math.random() * (maxBaseY - minBaseY);
     }
 
     return false;
@@ -352,14 +364,15 @@ export default function App() {
 
   // Admin authentication states
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isBypassAdmin, setIsBypassAdmin] = useState(false);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const isAdmin = (currentUser?.email === 'adhnanbasheer93@gmail.com') || isBypassAdmin;
+  const adminEmail = (import.meta as any).env?.VITE_ADMIN_EMAIL || "admin@example.com";
+  const isAdmin = currentUser !== null && currentUser.email === adminEmail;
 
   // Tracking setup parameters
   const [mediaPipeStatus, setMediaPipeStatus] = useState<'UNINITIALIZED' | 'LOADING' | 'READY' | 'ERROR'>('UNINITIALIZED');
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraActiveSession, setCameraActiveSession] = useState(false);
   const [countdownNum, setCountdownNum] = useState(3);
 
   // HTML Element references
@@ -474,7 +487,7 @@ export default function App() {
   const handleAdminGoogleSignIn = async () => {
     const user = await signInWithGoogle();
     if (user) {
-      if (user.email === 'adhnanbasheer93@gmail.com') {
+      if (user.email === adminEmail) {
         sfx.playGoldenCatch(); // play iconic 8-bit sound
         alert(`Authorized personnel verified: Welcome back, ${user.displayName || 'Admin'}!`);
         setShowLoginModal(false);
@@ -486,24 +499,8 @@ export default function App() {
     }
   };
 
-  const handleAdminPasscodeSignIn = (passcode: string): boolean => {
-    if (passcode === 'duckhuntadmin') {
-      setIsBypassAdmin(true);
-      sfx.playGoldenCatch();
-      alert("SIMULATOR MODE ENABLED: local-terminal access has been granted.");
-      setShowLoginModal(false);
-      setShowAdminDashboard(true);
-      return true;
-    }
-    return false;
-  };
-
   const handleAdminLogout = async () => {
-    if (isBypassAdmin) {
-      setIsBypassAdmin(false);
-    } else {
-      await logOutAdmin();
-    }
+    await logOutAdmin();
     setShowAdminDashboard(false);
     alert("SECURE CONSOLE SESSION TERMINATED successfully.");
   };
@@ -513,12 +510,55 @@ export default function App() {
     setMuteState(!settings.soundEnabled);
   }, [settings.soundEnabled]);
 
+  // Helper to sanitize player name inputs
+  const sanitizePlayerName = (rawName: string): string => {
+    // Strip any HTML tags or script elements
+    let name = rawName.replace(/<[^>]*>/g, '');
+    // Support alphanumeric characters, layout spaces, dots, dashes
+    name = name.replace(/[^a-zA-Z0-9 .\-_]/g, '');
+    // Force uppercase format matching retro arcade systems
+    name = name.toUpperCase().trim();
+    // Maintain strict length limits to prevent DB abuse or UI overflows
+    if (name.length < 3) return `HNT${Math.floor(100 + Math.random() * 900)}`;
+    if (name.length > 25) name = name.substring(0, 25);
+    return name;
+  };
+
   // Handle high score saves
   const handleSaveHighScore = (name: string, savedScore: number, accuracy: number) => {
+    // 1. Input Sanitization & Alphanumeric format enforcement
+    const sanitizedName = sanitizePlayerName(name);
+
+    // 2. Anti-cheat game-state validation checks (Option C)
+    if (gameState !== GameState.GAMEOVER) {
+      console.warn("Anti-Cheat: High score submission rejected because game is not over.");
+      alert("SUBMISSION REJECTED: Game session status invalid.");
+      return;
+    }
+
+    if (savedScore > 500000) {
+      console.warn("Anti-Cheat: Score exceeded absolute legal gameplay capability limits.");
+      alert("SUBMISSION REJECTED: Suspicious score values detected.");
+      return;
+    }
+
+    if (savedScore !== scoreRef.current) {
+      console.warn("Anti-Cheat: Submitted score does not match actual tracked game session ref.");
+      alert("SUBMISSION REJECTED: Memory state mismatch.");
+      return;
+    }
+
+    const calculatedAccuracy = totalShots > 0 ? Math.round((totalHits / totalShots) * 100) : 0;
+    if (accuracy !== calculatedAccuracy) {
+      console.warn("Anti-Cheat: Submitted accuracy does not match computed session tracking.");
+      alert("SUBMISSION REJECTED: Stat verification mismatch.");
+      return;
+    }
+
     const newEntry: HighScore = {
       score: savedScore,
       accuracy,
-      name,
+      name: sanitizedName,
       date: new Date().toLocaleDateString(),
     };
 
@@ -552,9 +592,13 @@ export default function App() {
     const updatedVal = !settings.cameraEnabled;
     setSettings(prev => ({ ...prev, cameraEnabled: updatedVal }));
     if (!updatedVal) {
+      setCameraActiveSession(false);
       stopCameraAndTracking();
     } else {
-      setMediaPipeStatus('LOADING');
+      if (gameState !== GameState.START) {
+        setCameraActiveSession(true);
+        setMediaPipeStatus('LOADING');
+      }
     }
   };
 
@@ -575,7 +619,7 @@ export default function App() {
 
   // MediaPipe hands loader and tracker initializer
   useEffect(() => {
-    if (!settings.cameraEnabled) {
+    if (!settings.cameraEnabled || !cameraActiveSession) {
       setMediaPipeStatus('UNINITIALIZED');
       return;
     }
@@ -603,7 +647,7 @@ export default function App() {
     return () => {
       clearInterval(pollInterval);
     };
-  }, [settings.cameraEnabled]);
+  }, [settings.cameraEnabled, cameraActiveSession]);
 
   const startMediaPipeTracking = (HandsClass: any, CameraClass: any) => {
     if (!videoRef.current) return;
@@ -1460,6 +1504,10 @@ export default function App() {
     streakRef.current = 0;
     setTotalShots(0);
     setTotalHits(0);
+
+    if (settings.cameraEnabled) {
+      setCameraActiveSession(true);
+    }
     
     activeDucks.current = [];
     activeParticles.current = [];
@@ -1564,6 +1612,8 @@ export default function App() {
     sfx.playGameOverSound();
     // Retrieve ducks cleared
     activeDucks.current = [];
+    setCameraActiveSession(false);
+    stopCameraAndTracking();
   };
 
   // Handle fallback click to shoot on canvas
@@ -1605,6 +1655,8 @@ export default function App() {
     setGameState(GameState.START);
     activeDucks.current = [];
     activeParticles.current = [];
+    setCameraActiveSession(false);
+    stopCameraAndTracking();
   };
 
   return (
@@ -1697,7 +1749,6 @@ export default function App() {
             sfx.playPinchTick();
           }}
           onGoogleSignIn={handleAdminGoogleSignIn}
-          onPasscodeSignIn={handleAdminPasscodeSignIn}
         />
       )}
 

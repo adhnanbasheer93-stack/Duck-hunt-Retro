@@ -8,7 +8,8 @@ import {
   orderBy, 
   limit,
   deleteDoc,
-  doc
+  doc,
+  serverTimestamp
 } from "firebase/firestore";
 import { 
   getAuth, 
@@ -63,10 +64,10 @@ export async function saveHighScoreToFirebase(highScore: HighScore): Promise<boo
   try {
     await addDoc(highScoresCol, {
       name: highScore.name,
-      score: highScore.score,
-      accuracy: highScore.accuracy,
+      score: Math.floor(Number(highScore.score)), // guarantee true server-safe integer
+      accuracy: Math.min(100, Math.max(0, Math.floor(Number(highScore.accuracy)))), // clamp and force integer
       date: highScore.date,
-      timestamp: new Date() // additional timestamp field for database sorting if needed
+      timestamp: serverTimestamp() // atomic server-enforced timestamp
     });
     return true;
   } catch (error) {

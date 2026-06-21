@@ -2,10 +2,28 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /highScores/{document} {
+      // 1. Leaderboard: Public read access is allowed
       allow read: if true;
-      allow create, update: if request.resource.data.name is string 
-                            && request.resource.data.score is number;
-      allow delete: if request.auth != null && request.auth.token.email == "adhnanbasheer93@gmail.com";
+      
+      // 2. Public Create: Enforce strict data structure & limits (anti-cheat protection)
+      allow create: if request.resource.data.name is string 
+                    && request.resource.data.name.size() >= 3 
+                    && request.resource.data.name.size() <= 25
+                    && request.resource.data.score is int 
+                    && request.resource.data.score >= 0 
+                    && request.resource.data.score <= 500000
+                    && request.resource.data.accuracy is int 
+                    && request.resource.data.accuracy >= 0 
+                    && request.resource.data.accuracy <= 100
+                    && request.resource.data.timestamp == request.time;
+                    
+      // 3. Update: Disabled to prevent retro high-scores tampering
+      allow update: if false;
+      
+      // 4. Delete: Restrict strictly to authenticated administrators only
+      allow delete: if request.auth != null 
+                    && request.auth.token.email != null 
+                    && request.auth.token.email == "<ADMIN_EMAIL>";
     }
   }
 }

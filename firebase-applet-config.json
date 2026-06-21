@@ -1,10 +1,10 @@
 {
-  "projectId": "duck-hunt-da4c9",
-  "appId": "1:200224244952:web:9d1ed3bfd50ee0b6e343ad",
-  "apiKey": "AIzaSyDdzMvwUnhhBhi1WjkBPuzECFn1Du7dGlQ",
-  "authDomain": "duck-hunt-da4c9.firebaseapp.com",
+  "projectId": "core-clover-jlll2",
+  "appId": "1:923630133592:web:e901924f3c1664d7b5052d",
+  "apiKey": "AIzaSyDCJzYTUqhytMWE4awQATEJF_RemuQFX-s",
+  "authDomain": "core-clover-jlll2.firebaseapp.com",
   "firestoreDatabaseId": "default",
-  "storageBucket": "duck-hunt-da4c9.firebasestorage.app",
-  "messagingSenderId": "200224244952",
-  "measurementId": "G-KVKVDB5XP4"
+  "storageBucket": "core-clover-jlll2.firebasestorage.app",
+  "messagingSenderId": "923630133592",
+  "measurementId": ""
 }
